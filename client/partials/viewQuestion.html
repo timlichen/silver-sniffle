@@ -1,0 +1,13 @@
+<div ng-controller="answerController">
+<h3>View a Question</h3>
+<!-- <span ng-bind='question'></span> -->
+  <h1>{{question.text}}</h1>
+  <h3>{{question.description}}</h3>
+  <div id="answers" ng-repeat="answer in question.answers | orderBy: '-likes'">
+    <p>{{answer.username}}:</p>
+    <p><b>{{answer.text}}</b></p>
+    <p>{{answer.description}}</p>
+    <p>{{answer.likes}} <button ng-click="likeAnswer(answer)">Like This Answer</button></p>
+    <br>
+  </div>
+</div>

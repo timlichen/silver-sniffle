@@ -1,0 +1,11 @@
+<div ng-controller="answerController">
+  <h3>Add an Answer</h3>
+  <span ng-bind="errors.message"></span>
+  <form>
+    <textarea ng-model="newAnswer.text" cols="50" rows="10" placeholder="Write Your Answer Text"></textarea>
+    <textarea ng-model="newAnswer.description" cols="50" rows="10" placeholder="Write Your Answer Description Text"></textarea>
+    <p><a href="#/"><button>Cancel</button></a>
+    <input type="submit" ng-click="addAnswer()"></p>
+  </form>
+
+</div>

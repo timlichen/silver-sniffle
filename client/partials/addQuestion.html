@@ -1,0 +1,11 @@
+<div ng-controller="addQuestionController">
+  <h3>Add a Question</h3>
+  <span ng-bind="errors.message"></span>
+  <form>
+    <textarea ng-model="newQuestion.text" cols="50" rows="10" placeholder="Write Your Question Text"></textarea>
+    <textarea ng-model="newQuestion.description" cols="50" rows="10" placeholder="Write Your Question Description Text"></textarea>
+    <p><a href="#/"><button>Cancel</button></a>
+    <input type="submit" ng-click="addQuestion()"></p>
+  </form>
+
+</div>

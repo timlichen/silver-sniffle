@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" ng-app='myApp'>
+<head>
+  <meta charset="UTF-8">
+  <title>Questions and Answers</title>
+  <script src="js/lib/angular.js"></script>
+  <script src="js/lib/angular-route.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script>
+
+    var myApp = angular.module('myApp', ['ngRoute'])
+
+    myApp.config(function ($routeProvider) {
+      $routeProvider
+        .when('/',{
+          templateUrl: 'partials/viewAllQuestions.html'
+        })
+        .when('/addQuestion',{
+          templateUrl: 'partials/addQuestion.html'
+        })
+        .when('/addAnswer/:id',{
+          templateUrl: 'partials/addAnswer.html'
+        })
+        .when('/viewQuestion/:id',{
+          templateUrl: 'partials/viewQuestion.html'
+        })
+        .otherwise({
+          redirectTo: '/'
+        });
+    });
+
+    //LOGIN FACTORY
+    myApp.factory('UserFactory', function(){
+      console.log('LOGIN FACTORY');
+        var factory = {};
+        while (!factory.user || factory.user.length < 1) {
+            var user = prompt("Please enter your name: ");
+            factory.user = user;
+        }
+        return factory;
+    });
+
+    //LOGIN CONTROLLER
+    myApp.controller("UserController", function($scope, UserFactory) {
+      console.log('User Controller Loaded');
+      console.log(UserFactory.user);
+      $scope.logout = function() {
+        UserFactory.user = '';
+        window.location.reload();
+      }
+    });
+
+    //QUESTION FACTORY
+    myApp.factory('questionFactory', function($http){
+      var factory = {};
+      var question = {};
+
+    factory.getQuestions = function(callback) {
+        $http.get('/questions').success(function(output) {
+          questions = output;
+          console.log(questions);
+          callback(questions);
+        });
+      }
+
+      factory.addQuestion = function(data, callback){ //callback here is error checking
+        $http.post('/addQuestionToDB', data).success( function(output){
+          if(!output.success) {
+            callback(output);
+          } else {
+            callback();
+          }
+        })
+      }
+      return factory;
+    })
+
+    //VIEW ALL QUESTION CONTROLLER
+    myApp.controller("viewAllController", function($scope, UserFactory, questionFactory){
+      console.log('View All Controller Loaded');
+
+      $scope.currentUser = UserFactory.user;
+      questionFactory.getQuestions( function(data){
+        $scope.questions = data;
+      })
+
+    })
+
+    //ADD QUESTION CONTROLLER
+    myApp.controller("addQuestionController", function($scope, UserFactory, questionFactory){
+      $scope.addQuestion = function(){
+        $scope.errors = {};
+        // console.log('here!');
+        // console.log($scope.newQuestion);
+        questionFactory.addQuestion($scope.newQuestion, function(errors){
+          if (errors) {
+            $scope.errors = errors;
+            console.log(errors);
+            $scope.newQuestion = {};
+          } else { console.log('question added'); }
+        })
+      }
+    })
+
+    //ANSWER FACTORY
+    myApp.factory('answerFactory', function($http){
+      var factory = {};
+      var answer = {};
+
+      factory.addAnswer = function(newAnswer, question, user, callback) {
+        //Setting question if in answer req.body
+        console.log('addAnswer factory', question._id);
+        newAnswer.id = question._id;
+        newAnswer.username = user;
+        $http.post("/answer", newAnswer).success(function(output) {
+          if(!output.success) {
+            callback(output);
+          } else {
+            callback();
+          }
+        });
+      }
+
+      factory.getQuestion = function(id, callback) {
+        $http.get('/questions/' + id).success(function(output) {
+          question = output;
+          callback(question);
+        });
+      }
+
+      factory.likeAnswer = function(answer, callback) {
+        $http.get('/like/' + answer._id).success(function(output) {
+          callback(output);
+        });
+
+      }
+
+      return factory;
+    });
+
+    //ANSWER CONTROLLER
+    myApp.controller("answerController", function($scope, $location, $routeParams, UserFactory, questionFactory, answerFactory){
+      $scope.currentUser = UserFactory.user;
+      $scope.newAnswer = {};
+
+      //Go get question using id...
+      answerFactory.getQuestion($routeParams.id, function(data) {
+        $scope.question = data;
+        console.log('Returned from getQuestion Get Question:', $scope.question);
+      });
+
+      $scope.addAnswer = function(){
+        answerFactory.addAnswer($scope.newAnswer, $scope.question, $scope.currentUser, function(data){
+          if (data.message == 'answer validation failed') {
+            $scope.errors = data;
+            $scope.newAnswer = {};
+          } else {
+            console.log('lets redirect');
+            $location.url("viewQuestion/" + $routeParams.id); }
+        })
+      }
+
+      $scope.likeAnswer = function(answer) {
+        answerFactory.likeAnswer(answer, function(errors) {
+          answerFactory.getQuestion($routeParams.id, function(data) {
+            $scope.question = data;
+          })
+        })
+      }
+    })
+
+  </script>
+
+</head>
+
+<body>
+  <div ng-controller="UserController">
+    <h1>Questions and Answers</h1>
+    <a href="#/">View All Questions</a> ///
+    <a href="#/addQuestion">Add a Question</a> ///
+    <a href="/" ng-click="logout()">Logout</a>
+    <div ng-view="">
+    </div>
+  </div>
+</body>
+</html>
+
+
